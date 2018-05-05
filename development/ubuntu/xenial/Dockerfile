@@ -60,6 +60,7 @@ RUN apt-get update \
     mysql-server \
     vim \
     iputils-ping \
+    net-tools \
     php \
     php-cli \
     php-gd \
