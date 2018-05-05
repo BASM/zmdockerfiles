@@ -76,7 +76,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # For ONVIF
-RUN cpan install Class::Std::Fast Data/Dump.pm SOAP/WSDL/Transport/HTTP.pm Data/UUID.pm IO/Socket/Multicast.pm
+RUN cpan install Class::Std::Fast Data/Dump.pm Class/Load.pm
+RUN cpan install SOAP/WSDL/Transport/HTTP.pm Data/UUID.pm IO/Socket/Multicast.pm 
 
 # Get the latest master branch and submodule(s)
 RUN git clone --recursive https://github.com/ZoneMinder/ZoneMinder
