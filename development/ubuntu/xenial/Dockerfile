@@ -25,6 +25,7 @@ RUN apt-get update \
     libdbd-mysql-perl \
     libdbi-perl \
     libdevice-serialport-perl \
+    libexpat1-dev \                                                         
     libgcrypt-dev \
     libgnutls-openssl-dev \
     libjpeg-turbo8 \
@@ -57,6 +58,8 @@ RUN apt-get update \
     libx264-dev \
     mysql-client \
     mysql-server \
+    vim \
+    iputils-ping \
     php \
     php-cli \
     php-gd \
@@ -71,6 +74,9 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     php-apcu-bc \
     && rm -rf /var/lib/apt/lists/*
+
+# For ONVIF
+RUN cpan install Class::Std::Fast Data/Dump.pm SOAP/WSDL/Transport/HTTP.pm Data/UUID.pm IO/Socket/Multicast.pm
 
 # Get the latest master branch and submodule(s)
 RUN git clone --recursive https://github.com/ZoneMinder/ZoneMinder
@@ -105,11 +111,19 @@ RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
 EXPOSE 80
 
 # Get the entrypoint script and make sure it is executable
-ADD https://raw.githubusercontent.com/ZoneMinder/zmdockerfiles/master/utils/entrypoint.sh /usr/local/bin/
+ADD utils/entrypoint.sh /usr/local/bin/
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 # This is run each time the container is started
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+################
+#   BUILD      #
+################
+
+# Go to git zmdockerfiles root directory
+#
+# docker build -t zoneminder/zoneminder -f development/ubuntu/xenial/Dockerfile .   
 
 ################
 # RUN EXAMPLES #
@@ -122,6 +136,10 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 #    --shm-size="512m" \
 #    --name zoneminder \
 #    zoneminder/zoneminder
+
+# For attache:
+#
+# docker exec -i -t zoneminder /bin/bash
 
 # ZoneMinder checks the TZ environment variable at runtime to determine the timezone.
 # If this variable is not set, then ZoneMinder will default to UTC.
