@@ -9,7 +9,7 @@
 ###############
 # SUBROUTINES #
 ###############
-
+set -x
 # Find ciritical files and perform sanity checks
 initialize () {
 
