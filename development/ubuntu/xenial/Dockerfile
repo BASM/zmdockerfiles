@@ -114,7 +114,8 @@ EXPOSE 80
 
 # Get the entrypoint script and make sure it is executable
 ADD utils/entrypoint.sh /usr/local/bin/
-RUN chmod 755 /usr/local/bin/entrypoint.sh
+ADD utils/mysql.sh /usr/local/bin/
+RUN chmod 755 /usr/local/bin/*.sh
 
 # This is run each time the container is started
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

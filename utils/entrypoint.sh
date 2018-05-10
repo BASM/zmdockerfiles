@@ -226,11 +226,15 @@ fi
 # Ensure we shutdown our services cleanly when we are told to stop
 trap cleanup SIGTERM
 
+#start mysql
+source /usr/local/bin/mysql.sh
+
 # Start Apache
 start_http
 
 # Start ZoneMinder
 start_zoneminder
+
 
 # Stay in a loop to keep the container running
 while :
