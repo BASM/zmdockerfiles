@@ -1,6 +1,5 @@
 #!/bin/bash
 set -x
-PHPINI="/etc/php/7.0/fpm/php.ini"
 
 if [ -z "$TZ" ]; then
     TZ="UTC"

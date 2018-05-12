@@ -1,14 +1,6 @@
 #!/bin/bash
 # ZoneMinder Dockerfile entrypoint script
-# Written by Andrew Bauer <zonexpertconsulting@outlook.com>
 #
-# This script will start mysql, apache, and zoneminder services.
-# It looks in common places for the files & executables it needs
-# and thus should be compatible with major Linux distros.
-
-###############
-# SUBROUTINES #
-###############
 set -x
 # Find ciritical files and perform sanity checks
 initialize () {
@@ -57,15 +49,7 @@ initialize () {
         fi
     done
 
-    # Look in common places for the php.ini relevant to zoneminder - php.ini
-    # Search order matters here because debian distros commonly have multiple php.ini's
-    for FILE in "/etc/php/7.0/apache2/php.ini" "/etc/php5/apache2/php.ini" "/etc/php.ini" "/usr/local/etc/php.ini"; do
-        if [ -f $FILE ]; then
-            PHPINI=$FILE
-            break
-        fi
-    done
-
+ 	  PHPINI="/etc/php/7.0/fpm/php.ini"
     for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN; do 
         if [ -z $FILE ]; then
             echo
@@ -85,92 +69,6 @@ initialize () {
     done
 }
 
-# Usage: get_mysql_option SECTION VARNAME DEFAULT
-# result is returned in $result
-# We use my_print_defaults which prints all options from multiple files,
-# with the more specific ones later; hence take the last match.
-get_mysql_option (){
-        result=`my_print_defaults "$1" | sed -n "s/^--$2=//p" | tail -n 1`
-        if [ -z "$result" ]; then
-            # not found, use default
-            result="$3"
-        fi
-}
-
-# Return status of mysql service
-mysql_running () {
-    mysqladmin ping > /dev/null 2>&1
-    local result="$?"
-    if [ "$result" -eq "0" ]; then
-        echo "1" # mysql is running
-    else
-        echo "0" # mysql is not running
-    fi
-}
-
-# Blocks until mysql starts completely or timeout expires
-mysql_timer () {
-    timeout=60
-    count=0
-    while [ "$(mysql_running)" -eq "0" ] && [ "$count" -lt "$timeout" ]; do
-        sleep 1 # Mysql has not started up completely so wait one second then check again
-        count=$((count+1))
-    done
-
-    if [ "$count" -ge "$timeout" ]; then
-       echo " * Warning: Mysql startup timer expired!"
-    fi
-}
-
-# mysql service management
-start_mysql () {
-    # determine if we are running mariadb or mysql then guess pid location
-    if [ $(mysql --version |grep -ci mariadb) -ge "1" ]; then
-        default_pidfile="/var/run/mariadb/mariadb.pid"
-    else
-        default_pidfile="/var/run/mysqld/mysqld.pid"
-    fi
-
-    # verify our guessed pid file location is right
-    get_mysql_option mysqld_safe pid-file $default_pidfile
-    mypidfile=$result
-    mypidfolder=${mypidfile%/*}
-
-    # Start mysql only if it is not already running
-    if [ "$(mysql_running)" -eq "0" ]; then
-        echo -n " * Starting MySQL database server service"
-        test -e $mypidfolder || install -m 755 -o mysql -g root -d $mypidfolder
-        mysqld_safe --user=mysql --timezone="$TZ" > /dev/null 2>&1 &
-        RETVAL=$?
-        if [ "$RETVAL" = "0" ]; then
-            echo "   ...done."
-            mysql_timer # Now wait until mysql finishes its startup
-        else
-            echo "   ...failed!"
-        fi
-    else
-        echo " * MySQL database server already running."
-    fi
-
-    mysqlpid=`cat "$mypidfile" 2>/dev/null`    
-}
-
-# Apache service management
-start_http () {
-    echo -n " * Starting Apache http web server service"
-    # Debian requires we load the contents of envvars before we can start apache
-    if [ -f /etc/apache2/envvars ]; then
-        source /etc/apache2/envvars
-    fi
-    $HTTPBIN -k start  > /dev/null 2>&1
-    RETVAL=$?
-    if [ "$RETVAL" = "0" ]; then
-        echo "   ...done."
-    else
-        echo "   ...failed!"
-    fi
-}
-
 # ZoneMinder service management
 start_zoneminder () {
     echo -n " * Starting ZoneMinder video surveillance recorder"
@@ -185,48 +83,31 @@ start_zoneminder () {
 
 cleanup () {
     echo " * SIGTERM received. Cleaning up before exiting..."
-    kill $mysqlpid > /dev/null 2>&1
-    $HTTPBIN -k stop > /dev/null 2>&1
+		stop_http
     sleep 5
 }
+
 
 ################
 # MAIN PROGRAM #
 ################
-
 echo
 initialize
-
-# Set the timezone before we start any services
-if [ -z "$TZ" ]; then
-    TZ="UTC"
-fi
-echo "date.timezone = $TZ" >> $PHPINI
-if [ -L /etc/localtime ]; then
-    ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
-fi
-if [ -f /etc/timezone ]; then
-    echo "$TZ" > /etc/timezone
-fi
 
 # Ensure we shutdown our services cleanly when we are told to stop
 trap cleanup SIGTERM
 
-#start mysql
+#set localzone
 source /usr/local/bin/localzone.sh
 
 #start mysql
 source /usr/local/bin/mysql.sh
 
-#start httpd
+#start web server
 source /usr/local/bin/httpd.sh
-
-# Start Apache
-start_http
 
 # Start ZoneMinder
 start_zoneminder
-
 
 # Stay in a loop to keep the container running
 while :
