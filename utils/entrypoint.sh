@@ -49,7 +49,7 @@ initialize () {
         fi
     done
 
- 	  PHPINI="/etc/php/7.0/fpm/php.ini"
+ 	  PHPINI="/etc/php/7.2/fpm/php.ini"
     for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN; do 
         if [ -z $FILE ]; then
             echo
@@ -98,13 +98,13 @@ initialize
 trap cleanup SIGTERM
 
 #set localzone
-source /usr/local/bin/localzone.sh
+source localzone.sh
 
 #start mysql
-source /usr/local/bin/mysql.sh
+source mysql.sh
 
 #start web server
-source /usr/local/bin/httpd.sh
+source httpd.sh
 
 # Start ZoneMinder
 start_zoneminder

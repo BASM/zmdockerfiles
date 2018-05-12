@@ -1,0 +1,119 @@
+FROM ubuntu:bionic
+MAINTAINER Leonid Myravjev <asm@asm.pp.ru>
+
+# Resynchronize the package index files
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    dh-autoreconf \
+    dpatch \
+    git \
+		nginx \
+    libarchive-zip-perl \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavfilter-dev \
+    libavformat-dev \
+    libavresample-dev \
+    ffmpeg \
+    libavutil-dev \
+    libbz2-dev \
+    libcurl4-gnutls-dev \
+    libdate-manip-perl \
+    libdbd-mysql-perl \
+    libdbi-perl \
+    libdevice-serialport-perl \
+    libexpat1-dev \                                                         
+    libgcrypt-dev \
+    libgnutls-openssl-dev \
+    libjpeg-turbo8 \
+    libjpeg-turbo8-dev \
+    libmime-lite-perl \
+    libmp4v2-dev \
+    libmysqlclient-dev \
+    libnet-sftp-foreign-perl \
+    libnetpbm10-dev \
+    libpcre3 \
+    libpcre3-dev \
+    libpolkit-gobject-1-dev \
+    libpostproc-dev \
+    libssl-dev \
+    libswscale-dev \
+    libsys-cpu-perl \
+    libsys-meminfo-perl \
+    libsys-mmap-perl \
+    libtheora-dev \
+    libtool \
+    libv4l-dev \
+    libvlc5 \
+    libvlccore9 \
+    libvlccore-dev \
+    libvlc-dev \
+    libvorbis-dev \
+    libvpx-dev \
+    libwww-perl \
+    libx264-dev \
+    mysql-client \
+    mysql-server \
+    vim \
+    iputils-ping \
+    net-tools \
+    php-fpm \
+    php-cli \
+    php-gd \
+    php-mysql \
+    ssmtp \
+    software-properties-common \
+    vlc-data \
+    yasm \
+    zip
+
+RUN apt-get install -y --no-install-recommends php-apcu-bc
+
+RUN rm -rf /var/lib/apt/lists/*
+
+# For ONVIF
+RUN cpan install Class::Std::Fast Data/Dump.pm Class/Load.pm
+RUN cpan install SOAP/WSDL/Transport/HTTP.pm 
+RUN cpan install Data/UUID.pm 
+RUN cpan install IO/Socket/Multicast.pm 
+
+ADD ZoneMinder /ZoneMinder
+
+# Change into the ZoneMinder directory
+WORKDIR /ZoneMinder
+
+# Configure ZoneMinder
+RUN cmake . -DCMAKE_INSTALL_PREFIX=/usr/
+
+# Build & install ZoneMinder
+RUN make && make install
+
+# ensure writable folders
+RUN ./zmlinkcontent.sh
+
+# Set our volumes before we attempt to configure apache
+#VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
+
+# Stop Apache and Mysql before we configure them
+RUN service mysql stop 
+
+# Nginx 
+ADD utils/nginx.conf /etc/nginx/
+
+# Configure mysql
+RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+
+# Expose http port
+EXPOSE 80
+
+# Get the entrypoint script and make sure it is executable
+ADD utils/entrypoint.sh /usr/bin/
+ADD utils/localzone.sh /usr/bin/
+ADD utils/mysql.sh /usr/bin/
+ADD utils/httpd.sh /usr/bin/
+RUN chmod 755 /usr/bin/*.sh
+
+# This is run each time the container is started
+ENTRYPOINT ["/usr/bin/entrypoint.sh"]
