@@ -209,25 +209,14 @@ if [ -f /etc/timezone ]; then
     echo "$TZ" > /etc/timezone
 fi
 
-# Configure then start Mysql
-if [ -n "$MYSQL_SERVER" ] && [ -n "$MYSQL_USER" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$MYSQL_DB" ]; then
-    sed -i -e "s/ZM_DB_NAME=zm/ZM_DB_NAME=$MYSQL_USER/g" $ZMCONF
-    sed -i -e "s/ZM_DB_USER=zmuser/ZM_DB_USER=$MYSQL_USER/g" $ZMCONF
-    sed -i -e "s/ZM_DB_PASS=zm/ZM_DB_PASS=$MYSQL_PASS/g" $ZMCONF
-    sed -i -e "s/ZM_DB_HOST=localhost/ZM_DB_HOST=$MYSQL_SERVER/g" $ZMCONF
-    start_mysql
-else
-    usermod -d /var/lib/mysql/ mysql
-    start_mysql
-    mysql -u root < $ZMCREATE
-    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'zmuser'@'localhost' IDENTIFIED BY 'zmpass';"
-fi
-
 # Ensure we shutdown our services cleanly when we are told to stop
 trap cleanup SIGTERM
 
 #start mysql
 source /usr/local/bin/mysql.sh
+
+#start httpd
+source /usr/local/bin/httpd.sh
 
 # Start Apache
 start_http
