@@ -4,13 +4,12 @@ MAINTAINER Markos Vakondios <mvakondios@gmail.com> Riley Schuit <riley.schuit@gm
 # Resynchronize the package index files
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    apache2 \
     build-essential \
     cmake \
     dh-autoreconf \
     dpatch \
     git \
-    libapache2-mod-php \
+		nginx \
     libarchive-zip-perl \
     libavcodec-dev \
     libavdevice-dev \
@@ -101,12 +100,10 @@ RUN ./zmlinkcontent.sh
 VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
 
 # Stop Apache and Mysql before we configure them
-RUN service mysql stop && service apache2 stop
+RUN service mysql stop 
 
-# Configure Apache
-RUN cp misc/apache.conf /etc/apache2/sites-available/000-default.conf
-RUN echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf && a2enconf -q servername
-RUN a2enmod -q cgi && a2enmod -q rewrite
+# Nginx 
+ADD utils/nginx.conf /etc/nginx/
 
 # Configure mysql
 RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
@@ -116,6 +113,7 @@ EXPOSE 80
 
 # Get the entrypoint script and make sure it is executable
 ADD utils/entrypoint.sh /usr/local/bin/
+ADD utils/localzone.sh /usr/local/bin/
 ADD utils/mysql.sh /usr/local/bin/
 ADD utils/httpd.sh /usr/local/bin/
 RUN chmod 755 /usr/local/bin/*.sh
