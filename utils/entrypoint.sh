@@ -213,6 +213,9 @@ fi
 trap cleanup SIGTERM
 
 #start mysql
+source /usr/local/bin/localzone.sh
+
+#start mysql
 source /usr/local/bin/mysql.sh
 
 #start httpd
