@@ -4,7 +4,7 @@
 set -x
 
 # Check to see if this script has access to all the commands it needs
-for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe sed sleep su tail usermod; do
+for CMD in cat grep install ln mysql mysqladmin sed sleep su tail usermod; do
 	type $CMD &> /dev/null
 
 	if [ $? -ne 0 ]; then
@@ -12,14 +12,6 @@ for CMD in cat grep install ln my_print_defaults mysql mysqladmin mysqld_safe se
 		echo "ERROR: The script cannot find the required command \"${CMD}\"."
 		echo
 		exit 1
-	fi
-done
-
-# Look in common places for the apache executable commonly called httpd or apache2
-for FILE in "/usr/sbin/httpd" "/usr/sbin/apache2"; do
-	if [ -f $FILE ]; then
-		HTTPBIN=$FILE
-		break
 	fi
 done
 
@@ -48,7 +40,7 @@ for FILE in "/usr/share/zoneminder/db/zm_create.sql" "/usr/local/share/zoneminde
 done
 
 PHPINI="/etc/php/7.2/fpm/php.ini"
-for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN; do 
+for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI; do 
 	if [ -z $FILE ]; then
 		echo
 		echo "FATAL: This script was unable to determine one or more cirtical files. Cannot continue."
@@ -60,7 +52,6 @@ for FILE in $ZMCONF $ZMPKG $ZMCREATE $PHPINI $HTTPBIN; do
 		echo "Path to zmpkg.pl: ${ZMPKG}"
 		echo "Path to zm_create.sql: ${ZMCREATE}"
 		echo "Path to php.ini: ${PHPINI}"
-		echo "Path to Apache executable: ${HTTPBIN}"
 		echo
 		exit 98
 	fi

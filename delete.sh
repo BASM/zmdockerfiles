@@ -4,4 +4,4 @@ set -x
 
 docker stop zoneminger
 docker rm zoneminger
-#docker rmi zoneminder/zoneminder
+docker rmi zoneminder/zoneminder

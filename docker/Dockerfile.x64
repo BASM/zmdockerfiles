@@ -57,6 +57,7 @@ RUN apt-get update \
     mysql-client \
     mysql-server \
     vim \
+	  gdb \
     iputils-ping \
     net-tools \
     php-fpm \
@@ -94,7 +95,7 @@ RUN make && make install
 RUN ./zmlinkcontent.sh
 
 # Set our volumes before we attempt to configure apache
-#VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
+VOLUME /var/lib/zoneminder/images /var/lib/zoneminder/events /var/lib/mysql /var/log/zm
 
 # Stop Apache and Mysql before we configure them
 RUN service mysql stop 
@@ -109,10 +110,12 @@ RUN echo "sql_mode=NO_ENGINE_SUBSTITUTION" >> /etc/mysql/mysql.conf.d/mysqld.cnf
 EXPOSE 80
 
 # Get the entrypoint script and make sure it is executable
+ADD utils/startenv.sh /usr/bin/
 ADD utils/entrypoint.sh /usr/bin/
 ADD utils/localzone.sh /usr/bin/
 ADD utils/mysql.sh /usr/bin/
 ADD utils/httpd.sh /usr/bin/
+ADD utils/zoneminder.sh /usr/bin
 RUN chmod 755 /usr/bin/*.sh
 
 # This is run each time the container is started
