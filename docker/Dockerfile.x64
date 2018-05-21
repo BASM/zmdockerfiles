@@ -118,5 +118,8 @@ ADD utils/httpd.sh /usr/bin/
 ADD utils/zoneminder.sh /usr/bin
 RUN chmod 755 /usr/bin/*.sh
 
+# php http caching
+RUN mkdir -p /var/cache/zoneminder && chown -R www-data:www-data /var/cache/zoneminder  
+
 # This is run each time the container is started
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
