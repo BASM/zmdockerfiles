@@ -1,8 +1,23 @@
 # zmdockerfiles
-This repository contains Docker files used in various ways for the ZoneMinder project.
 
-Contributions are welcome, but please follow instructions under each subfolder:
+Dockerfile for development ZoneMinder (includes gdb, vim etc).
 
-- [buildsystem](https://github.com/ZoneMinder/zmdockerfiles/tree/master/buildsystem) - These build zoneminder into packages
-- [development](https://github.com/ZoneMinder/zmdockerfiles/tree/master/development) - These run the latest ZoneMinder code.
-- [release](https://github.com/ZoneMinder/zmdockerfiles/tree/master/release) - These run the latest ZoneMinder release.
+Components: nginx, mysql, php-fpm.
+
+# Build and start:
+
+1. ./build.sh   # Build container
+2. ./run.sh     # Start container (open 127.0.0.1:80 for configurating or usage ZoneMinger)
+3. ./attache.sh # Open bash from container
+
+4. delete.sh    # Delete all images and conteiners with ZoneMinger
+5. stop.sh      # Stopo ZoneMinger
+6. copy.sh      # example with copy file to the cointeider
+
+# Notes
+
+* I don't like apache2, and I switch to nginx.
+* For ONVIF discovery need broadcast, I use '--net=host' for network on the Docker, becouse other
+optins blocked broadcast. (Fix it if you can)
+
+
